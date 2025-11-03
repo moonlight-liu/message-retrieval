@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Whoosh 索引文件（自动生成，不应提交）
+index_data/
+
+# 诊断和临时文件
+failed_files.txt
+test_search.py
+diagnose_missing_docs.py
+rebuild_index.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统
+.DS_Store
+Thumbs.db
