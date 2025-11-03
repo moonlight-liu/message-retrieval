@@ -64,6 +64,33 @@ class CustomTfIdfScorer(BaseScorer):
 
         # 5. 最终得分 = 平滑TF * IDF
         return smoothed_tf * idf
+    
+    def max_quality(self):
+        """
+        返回该评分器可能产生的最大分数。
+        这用于 Whoosh 的查询优化。
+        
+        对于 TF-IDF：
+        - 最大 TF 假设为一个很大的值（如100次出现）
+        - 最大 smoothed_tf = 1 + log(100) ≈ 5.6
+        - IDF = log(N / DF)，当 DF = 1 时最大
+        """
+        if self.df > 0:
+            max_idf = math.log(self.N / self.df)
+        else:
+            max_idf = math.log(self.N)
+        
+        # 假设最大词频为 100
+        max_smoothed_tf = 1.0 + math.log(100)
+        
+        return max_smoothed_tf * max_idf
+    
+    def block_quality(self, matcher):
+        """
+        返回当前块的质量估计。
+        对于简单实现，返回 max_quality。
+        """
+        return self.max_quality()
 
 # --------------------------
 # 2. 自定义评分权重类 (Weighting)

@@ -74,10 +74,11 @@ def generate_snippet(content, query_terms, max_length=200):
     if end < len(content):
         snippet = snippet + "..."
     
-    # 高亮所有查询词
+    # 高亮所有查询词（使用单词边界确保完整匹配）
     for term in query_terms:
-        # 使用正则表达式进行不区分大小写的替换
-        pattern = re.compile(re.escape(term), re.IGNORECASE)
+        # 使用 \b 单词边界来匹配完整单词，避免只匹配词干
+        # 例如：匹配 "hurricane" 而不是只匹配 "hurrican"
+        pattern = re.compile(r'\b' + re.escape(term) + r'\w*\b', re.IGNORECASE)
         snippet = pattern.sub(lambda m: f"【{m.group(0)}】", snippet)
     
     return snippet
@@ -128,19 +129,9 @@ def search_index(query_string, hits_limit):
             print("未找到任何匹配文档。")
             return
 
-        # 提取查询词用于高亮
-        query_terms = []
-        if hasattr(query, 'leaves'):
-            # 对于复合查询，提取所有叶子节点的词项
-            for leaf in query.leaves():
-                if hasattr(leaf, 'text'):
-                    query_terms.append(leaf.text)
-        elif hasattr(query, 'text'):
-            # 对于简单查询
-            query_terms.append(query.text)
-        else:
-            # 默认使用查询字符串分词
-            query_terms = query_string.split()
+        # 提取查询词用于高亮（使用原始查询字符串，避免词干提取）
+        # 这样可以确保高亮显示完整的单词，而不是词干
+        query_terms = query_string.lower().split()
 
         for i, hit in enumerate(results):
             # Rank: 排名
@@ -160,8 +151,9 @@ def search_index(query_string, hits_limit):
             
             # 打印结果，模仿作业要求的格式
             print(f"{rank:02d} [{score:.4f}] {doc_id}")
-            # 打印摘要，并去除多余的换行符和首尾空格
-            print(snippet.replace('\n', ' ').strip())
+            # 打印摘要，并去除多余的换行符和首尾空格，合并多余空格
+            clean_snippet = ' '.join(snippet.replace('\n', ' ').split())
+            print(clean_snippet)
             print()
             
     print("-" * 60)
