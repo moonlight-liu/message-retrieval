@@ -31,6 +31,35 @@ def read_document_content(doc_path):
     except Exception as e:
         return ""
 
+def extract_document_metadata(doc_path):
+    """
+    从原始文件中提取文档的元数据信息
+    :param doc_path: 文档的相对路径（从索引中获取）
+    :return: 包含 DOCTYPE 和 TXTTYPE 的字典
+    """
+    try:
+        full_path = os.path.join(DATA_ROOT_DIR, doc_path)
+        with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+        
+        # 提取 DOCTYPE
+        doctype_match = re.search(r'<DOCTYPE>\s*(.*?)\s*</DOCTYPE>', content, re.DOTALL)
+        doctype = doctype_match.group(1).strip() if doctype_match else "N/A"
+        
+        # 提取 TXTTYPE
+        txttype_match = re.search(r'<TXTTYPE>\s*(.*?)\s*</TXTTYPE>', content, re.DOTALL)
+        txttype = txttype_match.group(1).strip() if txttype_match else "N/A"
+        
+        return {
+            'doctype': doctype,
+            'txttype': txttype
+        }
+    except Exception as e:
+        return {
+            'doctype': 'N/A',
+            'txttype': 'N/A'
+        }
+
 def generate_snippet(content, query_terms, max_length=200):
     """
     生成包含查询词的摘要片段
@@ -42,27 +71,32 @@ def generate_snippet(content, query_terms, max_length=200):
     if not content:
         return "（文档内容为空）"
     
+    # 清理内容，移除多余的空白字符
+    content = ' '.join(content.split())
+    
     # 将内容转换为小写以便匹配（不区分大小写）
     content_lower = content.lower()
     
     # 找到第一个查询词的位置
     first_pos = -1
-    matched_term = None
     for term in query_terms:
         term_lower = term.lower()
         pos = content_lower.find(term_lower)
         if pos != -1 and (first_pos == -1 or pos < first_pos):
             first_pos = pos
-            matched_term = term_lower
     
     if first_pos == -1:
         # 如果没有找到查询词，返回文档开头
         snippet = content[:max_length]
         if len(content) > max_length:
             snippet += "..."
+        # 高亮处理
+        for term in query_terms:
+            pattern = re.compile(r'\b' + re.escape(term) + r'\w*\b', re.IGNORECASE)
+            snippet = pattern.sub(lambda m: f"【{m.group(0)}】", snippet)
         return snippet
     
-    # 计算摘要的起始和结束位置
+    # 计算摘要的起始和结束位置（以查询词为中心）
     start = max(0, first_pos - max_length // 2)
     end = min(len(content), first_pos + max_length // 2)
     
@@ -74,10 +108,8 @@ def generate_snippet(content, query_terms, max_length=200):
     if end < len(content):
         snippet = snippet + "..."
     
-    # 高亮所有查询词（使用单词边界确保完整匹配）
+    # 高亮所有查询词
     for term in query_terms:
-        # 使用 \b 单词边界来匹配完整单词，避免只匹配词干
-        # 例如：匹配 "hurricane" 而不是只匹配 "hurrican"
         pattern = re.compile(r'\b' + re.escape(term) + r'\w*\b', re.IGNORECASE)
         snippet = pattern.sub(lambda m: f"【{m.group(0)}】", snippet)
     
@@ -143,17 +175,24 @@ def search_index(query_string, hits_limit):
             # doc_path: 文档路径
             doc_path = hit.get('doc_path', '')
             
+            # 提取文档元数据
+            metadata = extract_document_metadata(doc_path)
+            doctype = metadata['doctype']
+            txttype = metadata['txttype']
+            
             # 从原始文件读取内容并生成摘要
             content = read_document_content(doc_path)
             # 调整 max_length 参数来控制摘要长度（单位：字符）
             # 建议值：150-500 之间
-            snippet = generate_snippet(content, query_terms, max_length=350)
+            snippet = generate_snippet(content, query_terms, max_length=250)
             
-            # 打印结果，模仿作业要求的格式
-            print(f"{rank:02d} [{score:.4f}] {doc_id}")
+            # 美化的输出格式
+            print(f"No: {rank:>2}    Score: {score:>8.4f}    DocNo: {doc_id:<20}    DocType: {doctype:<10}    TxtType: {txttype}")
+            print("-" * 100)
             # 打印摘要，并去除多余的换行符和首尾空格，合并多余空格
             clean_snippet = ' '.join(snippet.replace('\n', ' ').split())
             print(clean_snippet)
+            print("=" * 100)
             print()
             
     print("-" * 60)
