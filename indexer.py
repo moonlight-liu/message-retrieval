@@ -74,13 +74,10 @@ def index_documents(ix):
     if not os.path.exists(DATA_ROOT_DIR):
         print(f"错误：找不到数据目录 '{DATA_ROOT_DIR}'。请确保该目录位于脚本旁边。")
         return
-
     writer = ix.writer()
     indexed_count = 0
     start_time = time.time()
-    
     print(f"开始遍历 '{DATA_ROOT_DIR}' 目录并添加文档...")
-
     # os.walk 会遍历目录下的所有子目录和文件
     for root, _, files in os.walk(DATA_ROOT_DIR):
         for filename in files:
