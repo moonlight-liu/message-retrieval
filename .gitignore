@@ -1,28 +1,125 @@
-# Python
+# 索引数据文件夹（自动生成）
+index_data/
+
+# Python 缓存文件
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
+
+# 分发 / 打包
 .Python
-*.egg-info/
-dist/
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Whoosh 索引文件（自动生成，不应提交）
-index_data/
+# PyInstaller
+#  通常这些文件是由 python 脚本从模板写入的
+#  在 PyInstaller 执行之前。它们也可能由于使用 --onefile 选项而生成在根目录中。
+*.manifest
+*.spec
 
-# 诊断和临时文件
-failed_files.txt
-test_search.py
-diagnose_missing_docs.py
-rebuild_index.py
+# 单元测试 / 覆盖率报告
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
 
-# IDE
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+#   根据官方建议，Pipfile.lock 一般应该包含在版本控制中。
+#   然而，如果是自动部署，你可能希望忽略它
+#   通过取消注释以下行。
+#Pipfile.lock
+
+# PEP 582; 由 e.g. github.com/David-OConnor/pyflow 使用
+__pypackages__/
+
+# Celery 相关
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath 解析文件
+*.sage.py
+
+# 环境变量
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder 项目设置
+.spyderproject
+.spyproject
+
+# Rope 项目设置
+.ropeproject
+
+# mkdocs 文档
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre 类型检查器
+.pyre/
+
+# IDE 设置
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# 操作系统
+# 操作系统生成的文件
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp
+*.log
+
+# 测试输出
+test_output/

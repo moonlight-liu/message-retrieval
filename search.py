@@ -3,7 +3,6 @@ import argparse
 import re
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
-from whoosh.highlight import SentenceFragmenter, Highlighter, ContextFragmenter
 from custom_scorer import CustomTfIdf # 导入自定义评分器
 import time
 
@@ -60,13 +59,12 @@ def extract_document_metadata(doc_path):
             'txttype': 'N/A'
         }
 
-def generate_snippet(content, query_terms, max_length=200):
+def generate_summary(content, max_length=100):
     """
-    生成包含查询词的摘要片段
+    生成文档摘要（从文档开头截取）
     :param content: 文档内容
-    :param query_terms: 查询词列表
     :param max_length: 摘要最大长度
-    :return: 高亮的摘要片段
+    :return: 文档摘要
     """
     if not content:
         return "（文档内容为空）"
@@ -74,46 +72,16 @@ def generate_snippet(content, query_terms, max_length=200):
     # 清理内容，移除多余的空白字符
     content = ' '.join(content.split())
     
-    # 将内容转换为小写以便匹配（不区分大小写）
-    content_lower = content.lower()
-    
-    # 找到第一个查询词的位置
-    first_pos = -1
-    for term in query_terms:
-        term_lower = term.lower()
-        pos = content_lower.find(term_lower)
-        if pos != -1 and (first_pos == -1 or pos < first_pos):
-            first_pos = pos
-    
-    if first_pos == -1:
-        # 如果没有找到查询词，返回文档开头
-        snippet = content[:max_length]
-        if len(content) > max_length:
-            snippet += "..."
-        # 高亮处理
-        for term in query_terms:
-            pattern = re.compile(r'\b' + re.escape(term) + r'\w*\b', re.IGNORECASE)
-            snippet = pattern.sub(lambda m: f"【{m.group(0)}】", snippet)
-        return snippet
-    
-    # 计算摘要的起始和结束位置（以查询词为中心）
-    start = max(0, first_pos - max_length // 2)
-    end = min(len(content), first_pos + max_length // 2)
-    
-    snippet = content[start:end]
-    
-    # 添加省略号
-    if start > 0:
-        snippet = "..." + snippet
-    if end < len(content):
-        snippet = snippet + "..."
-    
-    # 高亮所有查询词
-    for term in query_terms:
-        pattern = re.compile(r'\b' + re.escape(term) + r'\w*\b', re.IGNORECASE)
-        snippet = pattern.sub(lambda m: f"【{m.group(0)}】", snippet)
-    
-    return snippet
+    # 从文档开头截取指定长度的摘要
+    if len(content) <= max_length:
+        return content
+    else:
+        # 截取到指定长度，并在最后一个完整单词处断开
+        summary = content[:max_length]
+        last_space = summary.rfind(' ')
+        if last_space != -1:
+            summary = summary[:last_space]
+        return summary + "..."
 
 def search_index(query_string, hits_limit):
     """执行搜索并打印结果。"""
@@ -161,10 +129,6 @@ def search_index(query_string, hits_limit):
             print("未找到任何匹配文档。")
             return
 
-        # 提取查询词用于高亮（使用原始查询字符串，避免词干提取）
-        # 这样可以确保高亮显示完整的单词，而不是词干
-        query_terms = query_string.lower().split()
-
         for i, hit in enumerate(results):
             # Rank: 排名
             rank = i + 1
@@ -182,16 +146,15 @@ def search_index(query_string, hits_limit):
             
             # 从原始文件读取内容并生成摘要
             content = read_document_content(doc_path)
-            # 调整 max_length 参数来控制摘要长度（单位：字符）
-            # 建议值：150-500 之间
-            snippet = generate_snippet(content, query_terms, max_length=250)
+            # 生成文档摘要（默认100字符）
+            summary = generate_summary(content, max_length=100)
             
             # 美化的输出格式
             print(f"No: {rank:>2}    Score: {score:>8.4f}    DocNo: {doc_id:<20}    DocType: {doctype:<10}    TxtType: {txttype}")
             print("-" * 100)
             # 打印摘要，并去除多余的换行符和首尾空格，合并多余空格
-            clean_snippet = ' '.join(snippet.replace('\n', ' ').split())
-            print(clean_snippet)
+            clean_summary = ' '.join(summary.replace('\n', ' ').split())
+            print(clean_summary)
             print("=" * 100)
             print()
             

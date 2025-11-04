@@ -56,10 +56,9 @@ def extract_doc_info(file_path):
         text_match = re.search(r'<TEXT>\s*(.*?)\s*</TEXT>', content, re.DOTALL)
         
         docID = docno_match.group(1).strip() if docno_match else None
-        text_content = text_match.group(1).strip() if text_match else ""
+        text_content = text_match.group(1).strip() if text_match else None
         
-        # 只要有 docID 就索引,即使 text_content 为空
-        if docID:
+        if docID and text_content:
             return {'docID': docID, 'content': text_content}
         
     except Exception as e:
